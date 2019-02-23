@@ -1,3 +1,2 @@
 # Streamline
-This a chrome extension to make reading articles on
-a web page simpler.
+This a chrome extension to keep track of productivity throughout the day.
