@@ -13,6 +13,15 @@
     "default_popup": "popup.html"
   },
 
-  "options_page": "options.html"
+  "options_page": "options.html",
 
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+
+  "permissions": [
+    "tabs",
+    "fileSystem"
+  ]
 }
