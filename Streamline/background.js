@@ -1,3 +1,6 @@
+var oldTime;
+var newTime;
+
 chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
     chrome.tabs.query({
                         active: true,
@@ -27,7 +30,7 @@ chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
         var notifOptions = {
                 type: "basic",
                 iconUrl: "icon48.png",
-                title: "aids",
+                title: "Website Opened",
                 message: domain
         };
         
@@ -57,7 +60,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     var notifOptions = {
             type: "basic",
             iconUrl: "icon48.png",
-            title: "aids",
+            title: "Website Changed",
             message: domain
     };
         
