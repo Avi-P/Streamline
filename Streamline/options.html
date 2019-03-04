@@ -1,34 +1,82 @@
 <!DOCTYPE html>
 <html>
-    <head><h1>Streamline Options</h1></head>
-    <h2>Generate Reports</h2>
-    <button id = "productiveList">
-        Productive Websites
-    </button>
-    <br>
-    <br>
-    <button id = "unproductiveList">
-        Unproductive Websites
-    </button>
-    <br>
-    <h2>Website Settings</h2>
-    <p>Enter websites in the boxes you want to be considered productive and unproductive websites.</p>
-    <h3> Productive Websites</h3>
-    <textarea id="productiveWebites" rows="10" cols="100">
-    Please enter your website in the format "www.domainname.com".
-        
-    Ex: "www.domainname.com, www.namedomain.com"
-    </textarea>
-    <br>
-    <h3> Unproductive Websites</h3>
-    <textarea id="unproductiveWebites" rows="10" cols="100">
-    Please enter your website in the format "www.domainname.com".
-        
-    Ex: "www.domainname.com, www.namedomain.com"
-    </textarea>
-    <br>
-    <br>
-    <button id = "save">
-        Save
-    </button>
+
+    <head>
+
+        <meta charset="utf-8">
+
+        <h1>
+            Streamline Options
+        </h1>
+    </head>
+
+    <body>
+        <h2>Generate Reports</h2>
+
+        <button id = "prod">
+            Productive Websites
+        </button>
+
+        <br>
+        <br>
+
+        <button id = "unprod">
+            Unproductive Websites
+        </button>
+
+        <br>
+
+        <h2>Website Settings</h2>
+
+        <p>
+            Enter websites in the boxes you want to be considered productive and unproductive websites.
+            <br>
+            Please enter your websites in the format "www.domainname.com".
+            <br>
+            Ex: "www.domainname.com, www.namedomain.com"
+        </p>
+
+        <h3> Productive Websites</h3>
+
+        <textarea id="productiveWebsites" rows="10" cols="100">
+        </textarea>
+
+        <br>
+
+        <button id = "deleteProd">
+            Delete
+        </button>
+
+        <br>
+        <br>
+
+        <button id = "saveProd">
+            Save
+        </button>
+
+        <br>
+        <br>
+
+        <h3> Unproductive Websites</h3>
+
+        <textarea id="unproductiveWebsites" rows="10" cols="100">
+        </textarea>
+
+        <br>
+
+        <button id = "deleteUnprod">
+            Delete
+        </button>
+
+        <br>
+        <br>
+
+        <button id = "saveUnprod">
+            Save
+        </button>
+
+        <script src = "background.js"></script>
+
+    </body>
+
 </html>
