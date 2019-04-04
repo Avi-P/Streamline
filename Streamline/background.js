@@ -1,21 +1,44 @@
-var oldTime;
-var newTime;
+var oldTime = "";    // will be used for getting time stamps
+var newTime = "";
 
-var idb = window.indexedDB;
+var prevDomain;
+var domain = "";
 
+const prodInitializer = {   // initializes the data to be stored for each productive domain name
+
+    timeSpent: 0,
+    type: "productive"
+
+};
+
+const unprodInitializer = { // initializes the data to be stored for each unproductive domain name
+
+    timeLimit: 900,
+    timeSpent: 0,
+    type: "unproductive"
+
+};
+
+const storage = chrome.storage.local;   // local storage using Chrome's Storage API
+
+
+/**
+ * Returns the domain name given a url
+ *
+ * @param url - url to retrieve the domain name from
+ * @returns {string} - the domain name
+ */
 function getDomain(url) {
 
-    var hostname;
+    let hostname, domain;       // initializes the hostname and domain name variables
 
-    if (url.indexOf("//") > -1) {
+    if (url.indexOf("//") > -1) {   // separates http(s):// from the domain name
         hostname = url.split('/')[2];
     } else {
         hostname = url.split('/')[0];
     }
 
-    var domain;
-
-    if (hostname.indexOf("www") > -1) {
+    if (hostname.indexOf("www") > -1) { // separates the domain name from the rest of the url
         domain = hostname.split(".")[1];
     } else {
         domain = hostname.split(".")[0];
@@ -25,6 +48,11 @@ function getDomain(url) {
 
 }
 
+/**
+ * Creates a notification in Chrome
+ *
+ * @param domain - the domain of the website opened
+ */
 function createNotif(domain) {
 
     var notifOptions = {
@@ -34,10 +62,77 @@ function createNotif(domain) {
         message: domain
     };
 
-    chrome.notifications.create('notif', notifOptions);
+    chrome.notifications.create("notif", notifOptions);
 
 }
 
+/**
+ * Gets the time elapsed
+ *
+ * @param domain
+ */
+function timeElapsed(domain) {
+
+    if (domain !== "") {
+        if (oldTime !== "") {
+
+            newTime = Date.now();
+
+            let timeElapsed = newTime - oldTime;
+
+            console.log(domain + ": " + timeElapsed);
+
+            updateTimeSpent(domain, timeElapsed);
+
+            oldTime = newTime;
+            newTime = "";
+
+        } else {
+
+            oldTime = Date.now();
+
+        }
+    }
+
+}
+
+/**
+ * Function to update the time spent on a domain.
+ * NOTE: Not even close to finished. Need to figure out how to access the object fields in the async chain.
+ *
+ * @param domain - the domain
+ * @param timeElapsed - the amount of time elapsed
+ */
+function updateTimeSpent(domain, timeElapsed) {
+
+    storage.get([domain], function (result) {
+
+        if (result) {
+
+            result.timeSpent = result.timeSpent + timeElapsed;
+
+            storage.set({domain: {type: "productive", timeSpent: timeElapsed}}, function () {
+
+                storage.get([domain], function (r) {
+
+                    console.log(domain, r);
+
+                })
+
+            })
+
+        }
+
+    })
+
+}
+
+/**
+ * Displays an array for debugging purposes
+ *
+ * @param array - array to display
+ * @returns {string} - the array in displayable format
+ */
 function displayArray(array) {
 
     var disp = "";
@@ -51,337 +146,277 @@ function displayArray(array) {
     return disp;
 }
 
+/**
+ * Waits for the window to load completely
+ */
 window.onload = function() {
 
-    (function() {
+    (function () {
         'use strict';
 
-        //check for support
-        if (!('indexedDB' in window)) {
+        /*if (!('indexedDB' in window)) {
             alert('This browser doesn\'t support IndexedDB');
             return;
-        }
-
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB error: " + event.target.errCode)
-        };
-
-        request.onupgradeneeded = function (event) {
-            var db = event.target.result;
-            if (!db.objectStoreNames.contains("domainNames")) {
-                var objectStore = db.createObjectStore("domainNames", {keyPath: "domainName"});
-                objectStore.createIndex("type", "type", { unique: false });
-                objectStore.createIndex("timeSpent", "timeSpent", { unique: false });
-                objectStore.createIndex("timeLimit", "timeLimit", { unique: false });
-            }
-        };
-
-        request.onsuccess = function(event) {
-            const db = event.target.result;
-            db.onversionchange = function(event) {
-                console.log('The version of this database has changed');
-            };
-
-        };
+        }*/
 
     })();
 
-    //localStorage.setItem("productiveList", JSON.stringify(document.getElementById("prodWebsites").value));
-    //localStorage.setItem("unproductiveList", JSON.stringify(document.getElementById("unprodWebsites").value));
+    var prod = document.getElementById("prod");         // the button labeled "Productive Websites"
+    var unprod = document.getElementById("unprod");     // the button labeled "Unproductive Websites"
 
-    var prod = document.getElementById("prod");
-
+    /*
+     * Displays the list of productive websites when the corresponding button is clicked
+     */
     prod.onclick = function () {
 
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB could not open!")
-        };
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('domainNames', 'readonly');
-            var store = tx.objectStore('domainNames');
-            var index = store.index("type");
-            index.get("productive").onsuccess = function(event) {
-                alert(event.target.result.domainName)
-            };
-            return tx.complete;
+        storage.get({["productiveList"]: []}, function (result) {   /* gets the productive list and sets a default value in case
+                                                                       the key does not have an associated value */
+            alert(result.productiveList)
 
-        };
+        });
 
-        //var prodList = JSON.parse(localStorage.getItem("productiveList"));
-
-        //alert(prodList);
-
-        // by passing an object you can define default values e.g.: []
-        //chrome.storage.local.get(["productiveList"], function (result) {
-            // the input argument is ALWAYS an object containing the queried keys
-            // so we select the key we need
-          //  var productiveList = result.productiveList;
-            //productiveList.push({["productiveList"]: productiveList, HasBeenUploadedYet: false});
-            // set the new array value to the same key
-            //chrome.storage.local.set({["productiveList"]: productiveList}, function () {
-                // you can use strings instead of objects
-                // if you don't  want to define default values
-              //  chrome.storage.local.get('productiveList', function (result) {
-                    //alert(result.productiveList)
-                //});
-            //});
-        //});
-
-        //chrome.storage.local.get(["productiveList"], callback);
-
-        //var productiveList = [];
-        //function callback(result) {
-        //    productiveList = result.productiveList;
-        //}
-
-        //alert("Productive List:\n" + displayArray(prodList));
-        //alert("Productive List:\n" + productiveList.join("\n"));
     };
 
-    var unprod = document.getElementById("unprod");
+    /*
+     * Displays the list of unproductive websites when the corresponding button is clicked
+     */
     unprod.onclick = function () {
 
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB could not open!")
-        };
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('domainName', 'readonly');
-            var store = tx.objectStore('domainName');
-            var index = store.index("type");
-            index.get("unproductive").onsuccess = function (event) {
-                alert(event.target.result.domainName)
-            };
-            return tx.complete;
-        };
+        storage.get({["unproductiveList"]: []}, function (result) { /* gets the unproductive list and sets a default value in case
+                                                                       the key does not have an associated value */
+            alert(result.unproductiveList)
+
+        });
+
     };
 
-    var saveProd = document.getElementById("saveProd");
-    var saveUnprod = document.getElementById("saveUnprod");
+    var saveProd = document.getElementById("saveProd");     // the button labeled "Save" under the productive text field
+    var saveUnprod = document.getElementById("saveUnprod"); // the button labeled "Save" under the unproductive text field
 
+    /*
+     * Saves the entered websites to the list of productive websites as well as straight to chrome.storage
+     */
     saveProd.onclick = function () {
 
-        //var productiveList = [];
+        let productive = document.getElementById("productiveWebsites").value.split(",");    // get all websites
 
-        var productive = document.getElementById("productiveWebsites").value.split(",");
+        let productives = [];   // initialize an array
+        let productives2 = [];
 
-        var productives = {};
+        for (var i = 0; i < productive.length; i++) {       // populate both arrays
 
-        for (var i = 0; i < productive.length; i++) {
             productives.push(getDomain(productive[i]));
+            productives2.push(getDomain(productive[i]));
+
         }
 
-        i = 0;
+        storage.get({["productiveList"]: []}, function (result) {   // open the productive website list and sets default value if necessary
 
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB could not open!")
-        };
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('domainName', 'readonly');
-            var store = tx.objectStore('domainName');
-            for (; i < productives.length; i++) {
-                var item = {
-                    domainName: productives[i],
-                    type: 'productive',
-                    timeSpent: 0,
-                    timeLimit: 0
-                };
-                store.add(item);
+            var productiveList = result.productiveList;             // array to store the new domain names
+
+            for (i = 0; i < productive.length; i++) {
+
+                productiveList.push(productives.pop());             // adds the new domain names
+
             }
-            return tx.complete;
-        };
 
-        //var dbPromise = idb.open('domains', 1, function(upgradeDb) {
-        //});
+            storage.set({["productiveList"]: productiveList}, function () { // updates the list of productive websites
 
-        //var p = JSON.parse(localStorage.getItem("productiveList"));
+                storage.get("productiveList", function (result) {           // gets the list of productive websites for debugging purposes
 
-        //var productiveList = p.split(",");
+                    alert(result.productiveList)
 
-        //localStorage.setItem("productiveList", JSON.stringify(productiveList));
+                });
 
-        //document.getElementById("prodWebsites").value = productiveList.join();
+            });
 
-        //document.getElementById("productiveWebsites").value = "";
+        });
 
-        //chrome.storage.local.get(["productiveList"], function (result) {
-            // the input argument is ALWAYS an object containing the queried keys
-            // so we select the key we need
-            //var productiveList = result.productiveList;
-            //var productives = document.getElementById("productiveWebsites").value.split(",");
+        for (i = 0; i < productives2.length; i++) {                         // adds each new domain name to storage
 
-            //alert(productives.join());
+            storage.set({[productives2[i]] : prodInitializer}, function () {
 
-            //productiveList.push({["productiveList"]: productiveList});
+                storage.get( productives2[i] , function (result) {
 
-            //for (var i = 0; i < productives.length; i++) {
-                //productiveList.push({["productiveList"]: productives[i], HasBeenUploadedYet: false});
-                //alert(productives[i].toString());
-              //  productiveList.push({["productiveList"]: productives[i]});
-            //}
-            // set the new array value to the same key
-            //chrome.storage.local.set({["productiveList"]: productiveList}, function () {
-                // you can use strings instead of objects
-                // if you don't  want to define default values
+                    console.log(productives2[i],result)
 
-              //  chrome.storage.local.get(["productiveList"], function(result) {
-                  //  alert(result.productiveList.join("\n"));
-                //});
+                });
 
-           // })
-        //});
+            });
 
-        //chrome.storage.local.get("productiveList", callback);
+        }
 
-        //function callback(result) {
-        //    productiveList = result.productiveList;
-        //}
-
-        //var productives = document.getElementById("productiveWebsites").value.split(",");
-
-        //for (var i = 0; i < productives.length; i++) {
-        //    productiveList.push([getDomain(productives[i]), 0, 0]);
-        //}
-
-        //chrome.storage.local.set({["productiveList"]: productiveList}, function ()  {
-        //    chrome.storage.local.get(["productiveList"], function (result) {
-        //        alert(result.productiveList.join());
-         //   })
-        //});
+        document.getElementById("productiveWebsites").value = "";   // resets the text field for productive websites
 
     };
 
+    /*
+     * Saves the entered websites to the list of unproductive websites as well as straight to chrome.storage
+     */
     saveUnprod.onclick = function () {
 
-        var unproductive = document.getElementById("productiveWebsites").value.split(",");
+        var unproductive = document.getElementById("unproductiveWebsites").value.split(",");    // get all websites
 
-        var unproductives = {};
+        var unproductives = [];             // initialize array
+        var unproductives2 = [];
 
-        for (var i = 0; i < unproductive.length; i++) {
-            unproductives.push(getDomain(productive[i]));
+        for (var i = 0; i < unproductive.length; i++) {     // populate both arrays
+
+            unproductives.push(getDomain(unproductive[i]));
+            unproductives2.push(getDomain(unproductive[i]))
+
         }
 
-        i = 0;
+        storage.get({["unproductiveList"]: []}, function (result) { // open the unproductive website list and sets default value if necessary
 
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB could not open!")
-        };
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('domainName', 'readonly');
-            var store = tx.objectStore('domainName');
-            for (; i < unproductives.length; i++) {
-                var item = {
-                    domainName: unproductives[i],
-                    type: 'unproductive',
-                    timeSpent: 0,
-                    timeLimit: 0
-                };
-                store.add(item);
+            var unproductiveList = result.unproductiveList;         // array to store the new domain names
+
+            for (i = 0; i < unproductive.length; i++) {
+
+                unproductiveList.push(unproductives.pop());       // adds the new domain names
+
             }
-            return tx.complete;
-        };
 
-        document.getElementById("unproductiveWebsites").value = "";
+            storage.set({["unproductiveList"]: unproductiveList}, function () { // updates the list of unproductive websites
+
+                storage.get("unproductiveList", function (result) {             // gets the list of unproductive websites for debugging purposes
+
+                    alert(result.unproductiveList)
+
+                });
+            });
+
+        });
+
+        for (i = 0; i < unproductives2.length; i++) {                           // adds each new domain name to storage
+
+            storage.set({[unproductives2[i]] : unprodInitializer}, function () {
+
+                storage.get( unproductives2[i] , function (result) {
+
+                    console.log(unproductives2[i],result)
+
+                });
+
+            });
+
+        }
+
+        document.getElementById("unproductiveWebsites").value = "";     // resets the text field for unproductive websites
 
     };
-    
+
     var deleteProd = document.getElementById("deleteProd");
     var deleteUnprod = document.getElementById("deleteUnprod");
-    
+
+    /**
+     * Have not done anything useful here yet, only useful for clearing storage in order to debug
+     */
     deleteProd.onclick = function () {
 
         var productive = document.getElementById("unproductiveWebsites").value.split(",");
 
-        var productives = {};
+        var productives = [];
 
         for (var i = 0; i < productive.length; i++) {
             productives.push(getDomain(productive[i]));
         }
 
-        i = 0;
+        storage.clear(function () {
 
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB could not open!")
-        };
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('domainName', 'readonly');
-            var store = tx.objectStore('domainName');
-            for (; i < productives.length; i++) {
-                store.delete(productives[i]);
-            }
-            return tx.complete;
-        };
+            console.log("Storage cleared");
+
+        });
 
         document.getElementById("productiveWebsites").value = "";
 
+        oldTime = new Date();
+
     };
 
-
-
+    /**
+     * Nothing useful here either because it will be only used for debugging for now
+     */
     deleteUnprod.onclick = function () {
-        //Delete the unproductive websites
+
         var unproductive = document.getElementById("unproductiveWebsites").value.split(",");
 
-        var unproductives = {};
+        var unproductives = [];
 
         for (var i = 0; i < unproductive.length; i++) {
             unproductives.push(getDomain(unproductive[i]));
         }
 
-        i = 0;
+        chrome.storage.local.get( "woof" , function (result) {
 
-        var request = idb.open('domains', 1);
-        request.onerror = function (event) {
-            alert("DB could not open!")
-        };
-        request.onsuccess = function (event) {
-            var db = event.target.result;
-            var tx = db.transaction('domainName', 'readonly');
-            var store = tx.objectStore('domainName');
-            for (; i < unproductives.length; i++) {
-                store.delete(unproductives[i]);
-            }
-            return tx.complete;
-        };
+            let int = result[1];
+            alert(typeof int)
+            int = int + 1;
+
+            let array = [
+                "productive",
+                int
+            ];
+
+            chrome.storage.local.set({["woof"] : array}, function () {
+
+                chrome.storage.local.get( "woof" , function(result) {
+
+                    console.log(result[1]);
+
+                })
+
+            });
+
+        });
 
         document.getElementById("unproductiveWebsites").value = "";
 
-    }
-
+    };
 
 };
 
+/**
+ * When new tab is opened, the domain is displayed in notifications
+ */
 chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
     chrome.tabs.query({
         active: true,
         currentWindow: true
-    }, function(tab) {
-        //var URL = tab[0].url;
-        //var array = URL.split(".");
+    }, function(tab) {              // displays the domain of this website
+
         var url = tab[0].url;
 
-        var domain = getDomain(url);
+        prevDomain = domain;
+
+        domain = getDomain(url);
 
         createNotif(domain);
+
+        timeElapsed(prevDomain);
+
     });
+
 });
 
+/**
+ * When the website changes, the new website is displayed
+ */
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+
     var url = tab.url;
 
-    var domain = getDomain(url);
+    prevDomain = domain;
+
+    console.log(prevDomain);            // debugging purposes...displays the previous domain name
+
+    domain = getDomain(url);
 
     createNotif(domain);
+
+    timeElapsed(prevDomain);
+
+
 });
 
 
