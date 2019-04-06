@@ -1,25 +1,24 @@
+/*
+ * TO DO:
+ * Close any unproductive tab that has been used for longer than  (timeLimit)
+ */
+
+
 var oldTime = "";    // will be used for getting time stamps
 var newTime = "";
 
 var prevDomain;
 var domain = "";
 
-const prodInitializer = {   // initializes the data to be stored for each productive domain name
+const prodInitializer = 0;   // initializes the data to be stored for each productive domain name
 
-    timeSpent: 0,
-    type: "productive"
+const unprodInitializer = 0; // initializes the data to be stored for each unproductive domain name
 
-};
-
-const unprodInitializer = { // initializes the data to be stored for each unproductive domain name
-
-    timeLimit: 900,
-    timeSpent: 0,
-    type: "unproductive"
-
-};
+const timeLimit = 9000;
 
 const storage = chrome.storage.local;   // local storage using Chrome's Storage API
+
+const tabs = chrome.tabs;
 
 
 /**
@@ -105,27 +104,74 @@ function timeElapsed(domain) {
  */
 function updateTimeSpent(domain, timeElapsed) {
 
-    storage.get([domain], function (result) {
+    domain = domain.toString();
 
-        if (result) {
+    storage.get({["unproductiveList"]: []}, function (result) {
 
-            result.timeSpent = result.timeSpent + timeElapsed;
+        if (result.unproductiveList.includes(domain)) {
 
-            storage.set({domain: {type: "productive", timeSpent: timeElapsed}}, function () {
+            storage.get(domain, function (result) {
 
-                storage.get([domain], function (r) {
+                if (result !== {}) {
 
-                    console.log(domain, r);
+                    storage.set({
+                        [domain]: (result[domain] + timeElapsed)
+                    }, function () {
 
-                })
+                        storage.get(domain, function (r) {
+
+                            console.log(domain, r[domain], r[domain] > timeLimit);
+                        });
+
+                        closeTab(domain);
+
+                    })
+
+                } else {
+                    console.log("Nothing updated...")
+                }
 
             })
 
+        } else {
+
+
+            storage.get({["productiveList"]: []}, function (result) {
+
+                if (result.productiveList.indexOf(domain.toString()) >= 0) {
+
+                    storage.get(domain, function (result) {
+
+                        if (result !== {}) {
+
+                            storage.set({
+                                [domain]: (result[domain] + timeElapsed)
+                            }, function () {
+
+                                storage.get(domain, function (r) {
+
+                                    console.log(domain, r);
+                                })
+
+                            })
+
+                        } else {
+                            console.log("Nothing updated...")
+                        }
+
+                    })
+
+                } else {
+                    console.log("Uh oh...")
+                }
+
+            });
         }
 
-    })
+    });
 
 }
+
 
 /**
  * Displays an array for debugging purposes
@@ -347,28 +393,6 @@ window.onload = function() {
             unproductives.push(getDomain(unproductive[i]));
         }
 
-        chrome.storage.local.get( "woof" , function (result) {
-
-            let int = result[1];
-            alert(typeof int)
-            int = int + 1;
-
-            let array = [
-                "productive",
-                int
-            ];
-
-            chrome.storage.local.set({["woof"] : array}, function () {
-
-                chrome.storage.local.get( "woof" , function(result) {
-
-                    console.log(result[1]);
-
-                })
-
-            });
-
-        });
 
         document.getElementById("unproductiveWebsites").value = "";
 
@@ -379,8 +403,8 @@ window.onload = function() {
 /**
  * When new tab is opened, the domain is displayed in notifications
  */
-chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
-    chrome.tabs.query({
+tabs.onActivated.addListener(({tabId, windowId}) => {
+    tabs.query({
         active: true,
         currentWindow: true
     }, function(tab) {              // displays the domain of this website
@@ -393,6 +417,8 @@ chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
 
         createNotif(domain);
 
+        closeTab(domain);
+
         timeElapsed(prevDomain);
 
     });
@@ -402,17 +428,17 @@ chrome.tabs.onActivated.addListener(({tabId, windowId}) => {
 /**
  * When the website changes, the new website is displayed
  */
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
     var url = tab.url;
 
     prevDomain = domain;
 
-    console.log(prevDomain);            // debugging purposes...displays the previous domain name
-
     domain = getDomain(url);
 
     createNotif(domain);
+
+    closeTab(domain);
 
     timeElapsed(prevDomain);
 
