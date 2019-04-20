@@ -8,15 +8,15 @@ tabs.onActivated.addListener(({tabId, windowId}) => {
         currentWindow: true
     }, function(tab) {              // displays the domain of this website
 
-        let url = tab[0].url;
+        let url = tab[0].url;       // url
 
-        prevDomain = domain;
+        prevDomain = domain;        // previous domain
 
-        domain = getDomain(url);
+        domain = getDomain(url);    // get the current domain
 
-        createNotif(domain);
+        createNotif(domain);        // create a chrome notification
 
-        timeElapsed(prevDomain);
+        timeElapsed(prevDomain);    // get the time elapsed and update the value
 
     });
 
@@ -27,16 +27,15 @@ tabs.onActivated.addListener(({tabId, windowId}) => {
  */
 tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 
-    let url = tab.url;
+    let url = tab.url;              // url
 
-    prevDomain = domain;
+    prevDomain = domain;            // previous domain
 
-    domain = getDomain(url);
+    domain = getDomain(url);        // get the current domain
 
-    createNotif(domain);
+    createNotif(domain);            // create a chrome notification
 
-    timeElapsed(prevDomain);
-
+    timeElapsed(prevDomain);        // get the time elapsed and update the value
 
 });
 
