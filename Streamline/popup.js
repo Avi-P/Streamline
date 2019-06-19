@@ -50,9 +50,7 @@ prodCheck.onclick = function () {
 
                         if (i === unprod.length - 1) {              // goes to the last value
 
-                            //alert("Prouctivity:\n" + displayArray(prodList));
-
-                            alert("Productivity:\n" + displayArray(prodList) + "\n" + "Unproductivity:\n" + displayArray(unprodList));  // display the report
+                            alert("Productivity:\n" + displayArray(prodList) + "Unproductivity:\n" + displayArray(unprodList));  // display the report
 
                         }
 

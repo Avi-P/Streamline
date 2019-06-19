@@ -24,5 +24,8 @@
     "storage",
     "tabs",
     "notifications"
-  ]
+  ],
+
+  "web_accessible_resources": ["options.html"]
+
 }
