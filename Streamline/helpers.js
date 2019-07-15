@@ -369,16 +369,14 @@ function deleteFromList(type) {
 }
 
 /**
- * DEBUGGING ONLY
  * Clears chrome storage
- *
- * @param type - productive or unproductive
  */
-function clear(type) {
+function clear(message) {
 
     storage.clear(function () {                                 // clear storage
 
-        console.log("Storage cleared");
+        console.log(message);
+        alert(message);
 
     });
 

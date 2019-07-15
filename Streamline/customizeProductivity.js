@@ -73,25 +73,14 @@ window.onload = function() {
 
     };
 
-
-    const clearProd = document.getElementById("clearProd");
-    const clearUnprod = document.getElementById("clearUnprod");
+    const clearAll = document.getElementById("clear");
 
     /**
-     * Clears chrome.storage for debugging purposes
+     * Clears chrome.storage
      */
-    clearProd.onclick = function () {
+    clearAll.onclick = function () {
 
-        clear("prod");
-
-    };
-
-    /**
-     * Clears chrome.storage for debugging purposes
-     */
-    clearUnprod.onclick = function () {
-
-        clear("unprod");
+        clear("Storage cleared");
 
     };
 
